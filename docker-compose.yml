@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # 1. Database Service
+  mongo:
+    image: mongo
+    container_name: saepe_mongo
+    restart: unless-stopped
+    volumes:
+      # Persist data to a named volume
+      - mongo-data:/data/db
+    networks:
+      - saepe-network
+
+  # 2. Backend Service (Node.js API)
+  api:
+    build:
+      context: ./back
+      # Optional: specify dockerfile if named differently
+      # dockerfile: Dockerfile
+    container_name: saepe_api
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/saepe_db
+    depends_on:
+      - mongo
+    networks:
+      - saepe-network
+
+  # 3. Frontend Service (React + Nginx)
+  web:
+    build:
+      context: ./front
+    container_name: saepe_web
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - saepe-network
+
+# Define the persistent volume
+volumes:
+  mongo-data:
+
+# Define a custom bridge network so services can communicate by name
+networks:
+  saepe-network:
+    driver: bridge

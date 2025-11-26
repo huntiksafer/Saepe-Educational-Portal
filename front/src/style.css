@@ -1,0 +1,53 @@
+/* Глобальні налаштування */
+body {
+    background-color: #E8E6D9 !important; /* Світлий беж (колір старої паперової карти) */
+    color: #1a1a1a;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Перефарбовуємо Навігацію (з синього на Оливковий) */
+.navbar, .bg-primary {
+    background-color: #4B5320 !important; /* Army Green (Оливковий) */
+    border-bottom: 4px solid #2F3318;
+}
+
+/* Кнопки (з синіх на Хакі) */
+.btn-primary {
+    background-color: #5D5A46 !important; /* Колір хакі */
+    border-color: #424032 !important;
+}
+
+.btn-primary:hover {
+    background-color: #424032 !important; /* Темніший при наведенні */
+}
+
+/* Футер */
+footer, .bg-dark {
+    background-color: #2c2e22 !important; /* Темно-зелений/чорний */
+    color: #dcdcdc !important;
+}
+
+/* Картки (Новини) */
+.card {
+    border: 1px solid #8B8589;
+    background-color: #fcfcfc;
+    border-radius: 2px; /* Більш "суворий" кут, менш заокруглений */
+}
+
+.card-header {
+    background-color: #dcdac8 !important;
+    font-weight: bold;
+    color: #4B5320;
+}
+
+/* Військовий стиль для навігації */
+.military-navbar {
+    background-color: #4B5320 !important; /* Оливковий колір */
+    border-bottom: 3px solid #2F3318;     /* Темна лінія знизу */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3); /* Тінь */
+}
+
+/* Глобальний фон сайту (щоб не був білим) */
+body {
+    background-color: #E8E6D9 !important;
+}
