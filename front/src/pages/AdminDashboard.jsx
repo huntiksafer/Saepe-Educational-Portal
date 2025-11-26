@@ -1,21 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api'; // Імпортуємо централізований API
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Form, Button, Alert, Table, Badge } from 'react-bootstrap';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [eventData, setEventData] = useState({
-        title: '', description: '', date: '', type: 'news', image: ''
+        title: '', description: '', date: '', type: 'news', image: '', isTopNews: false
     });
     const [eventsList, setEventsList] = useState([]);
     const [message, setMessage] = useState({ type: '', text: '' });
-
-    // Хелпер для заголовка авторизації
-    const getAuthHeader = () => {
-        const token = localStorage.getItem('token');
-        return { headers: { Authorization: `Bearer ${token}` } };
-    };
 
     // --- БЕЗПЕКА І ЗАВАНТАЖЕННЯ ---
     useEffect(() => {
@@ -41,7 +35,8 @@ const AdminDashboard = () => {
 
     const fetchEvents = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/events', getAuthHeader());
+            // Тепер api.js сам додасть токен і базову адресу
+            const response = await api.get('/api/events');
             setEventsList(response.data);
         } catch (err) {
             console.error('Error fetching events:', err);
@@ -53,7 +48,8 @@ const AdminDashboard = () => {
     };
 
     const handleChange = (e) => {
-        setEventData({ ...eventData, [e.target.name]: e.target.value });
+        const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+        setEventData({ ...eventData, [e.target.name]: value });
     };
 
     // --- ДОДАВАННЯ ПОДІЇ ---
@@ -62,10 +58,12 @@ const AdminDashboard = () => {
         setMessage({ type: '', text: '' });
 
         try {
-            await axios.post('http://localhost:5000/api/events', eventData, getAuthHeader());
+            // Використовуємо api.post без ручних заголовків
+            await api.post('/api/events', eventData);
             setMessage({ type: 'success', text: 'Подію успішно додано!' });
-            setEventData({ title: '', description: '', date: '', type: 'news', image: '' });
-            fetchEvents(); // Обновление списка
+            // Очищаємо форму
+            setEventData({ title: '', description: '', date: '', type: 'news', image: '', isTopNews: false });
+            fetchEvents(); // Оновлення списку
         } catch (err) {
             console.error('Error adding event:', err);
             setMessage({ type: 'danger', text: 'Помилка при збереженні.' });
@@ -77,27 +75,29 @@ const AdminDashboard = () => {
         if (!window.confirm('Ви впевнені, що хочете видалити цей запис?')) return;
 
         try {
-            // Надсилання DELETE запиту з токеном
-            await axios.delete(`http://localhost:5000/api/events/${id}`, getAuthHeader());
+            // Надсилання DELETE запиту через api
+            await api.delete(`/api/events/${id}`);
 
             // Оновлення інтерфейсу
             setMessage({ type: 'success', text: 'Подію видалено.' });
             fetchEvents();
         } catch (err) {
             console.error('Error deleting:', err);
-            setMessage({ type: 'danger', text: 'Не вдалося видалити подію. Спробуйте пізніше.' });
+            setMessage({ type: 'danger', text: 'Не вдалося видалити подію. Можливо, у вас немає прав.' });
         }
     };
 
     return (
         <Container className="mb-5">
-            <h2 className="mb-4 border-bottom pb-2">Адмін-панель</h2>
+            <h2 className="mb-4 border-bottom pb-2" style={{ color: '#4B5320' }}>Адмін-панель</h2>
 
             {/* ФОРМА ДОДАВАННЯ */}
             <Row className="mb-5">
                 <Col md={12}>
-                    <Card className="shadow-sm">
-                        <Card.Header className="bg-light text-military fw-bold">Додати нову подію</Card.Header>
+                    <Card className="shadow-sm military-card-border">
+                        <Card.Header className="military-card-header text-white fw-bold" style={{ backgroundColor: '#4B5320' }}>
+                            Додати нову подію
+                        </Card.Header>
                         <Card.Body>
                             {message.text && <Alert variant={message.type}>{message.text}</Alert>}
                             <Form onSubmit={handleSubmit}>
@@ -130,13 +130,22 @@ const AdminDashboard = () => {
                                         </Form.Group>
                                     </Col>
                                     <Col md={6}>
-                                        <Form.Group className="mb-3">
+                                        <Form.Group className="mb-3" controlId="formImage">
                                             <Form.Label>Зображення URL</Form.Label>
-                                            <Form.Control type="text" name="image" value={eventData.image} onChange={handleChange} />
+                                            <Form.Control type="text" name="image" value={eventData.image} onChange={handleChange} placeholder="https://..." />
                                         </Form.Group>
                                     </Col>
                                 </Row>
-                                <Button variant="primary" type="submit">Зберегти</Button>
+                                <Form.Group className="mb-3" controlId="formTopNews">
+                                    <Form.Check
+                                        type="checkbox"
+                                        label="Важлива новина (для слайдера)"
+                                        name="isTopNews"
+                                        checked={eventData.isTopNews}
+                                        onChange={handleChange}
+                                    />
+                                </Form.Group>
+                                <Button variant="primary" type="submit" style={{ backgroundColor: '#4B5320', borderColor: '#4B5320' }}>Зберегти</Button>
                             </Form>
                         </Card.Body>
                     </Card>
@@ -146,8 +155,8 @@ const AdminDashboard = () => {
             {/* СПИСОК ПОДІЙ */}
             <Row>
                 <Col>
-                    <h4 className="mb-3 text-military">Список подій</h4>
-                    <div className="table-responsive bg-white shadow-sm rounded">
+                    <h4 className="mb-3" style={{ color: '#4B5320' }}>Список подій</h4>
+                    <div className="table-responsive bg-white shadow-sm rounded military-card-border">
                         <Table hover className="mb-0 align-middle">
                             <thead className="bg-light">
                             <tr>
@@ -159,15 +168,15 @@ const AdminDashboard = () => {
                             </thead>
                             <tbody>
                             {eventsList.map(event => (
-                                <tr key={event.id || event._id}>
+                                <tr key={event._id}>
                                     <td>{new Date(event.date).toLocaleDateString()}</td>
                                     <td className="fw-bold">{event.title}</td>
-                                    <td><Badge bg="secondary">{event.type}</Badge></td>
+                                    <td><Badge bg="secondary">{event.type === 'news' ? 'Новина' : 'Розклад'}</Badge></td>
                                     <td className="text-end">
                                         <Button
                                             variant="danger"
                                             size="sm"
-                                            onClick={() => handleDelete(event.id || event._id)}
+                                            onClick={() => handleDelete(event._id)}
                                         >
                                             Видалити
                                         </Button>

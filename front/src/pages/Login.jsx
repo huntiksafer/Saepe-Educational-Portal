@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api'; // Використовуємо наш налаштований інстанс
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 
@@ -19,21 +19,22 @@ const Login = () => {
         setLoading(true);
         setError('');
 
+        // Визначаємо короткий шлях (без localhost)
         const endpoint = isRegister ? '/api/register' : '/api/login';
-        const apiUrl = `http://localhost:5000${endpoint}`;
 
         try {
-            const response = await axios.post(apiUrl, formData);
+            // Використовуємо api замість axios
+            const response = await api.post(endpoint, formData);
 
             const { token, role } = response.data;
 
             // 1. Зберігаємо Токен
             localStorage.setItem('token', token);
 
-            // 2. Зберігаємо Роль (Якщо бекенд не надіслав, вважаємо 'user')
+            // 2. Зберігаємо Роль
             localStorage.setItem('role', role || 'user');
 
-            // 3. Перенаправлення в залежності від ролі
+            // 3. Перенаправлення
             if (role === 'admin') {
                 navigate('/admin');
             } else {

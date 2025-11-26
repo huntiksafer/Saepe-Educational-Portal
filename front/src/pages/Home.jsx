@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api'; // Використовуємо наш централізований API
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Carousel, Card, Button, Spinner, Alert, Modal } from 'react-bootstrap';
 
@@ -16,22 +16,15 @@ const Home = () => {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const token = localStorage.getItem('token');
+                // Більше не треба вручну додавати токен, api.js зробить це сам
+                const response = await api.get('/api/events');
 
-                // Заголовок Authorization обов'язковий
-                const config = {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                };
-
-                const response = await axios.get('http://localhost:5000/api/events', config);
                 setEvents(response.data);
                 setError(null);
             } catch (err) {
                 console.error('Error fetching events:', err);
                 if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-                    // Токен недействителен
+                    // Якщо токен протух - перекидаємо на вхід
                     localStorage.clear();
                     navigate('/login');
                 } else {
@@ -55,6 +48,7 @@ const Home = () => {
         setSelectedEvent(null);
     };
 
+    // Фільтруємо події
     const topNews = events.filter(event => event.isTopNews);
     const regularNews = events.filter(event => !event.isTopNews);
 
@@ -73,13 +67,13 @@ const Home = () => {
             {/* Слайдер */}
             {topNews.length > 0 && (
                 <section className="mb-5">
-                    <h2 className="mb-3 border-bottom pb-2">Головні події</h2>
+                    <h2 className="mb-3 border-bottom pb-2" style={{ color: '#4B5320' }}>Головні події</h2>
                     <Carousel className="shadow-sm rounded">
                         {topNews.map((news) => (
-                            <Carousel.Item key={news.id} interval={5000}>
+                            <Carousel.Item key={news._id} interval={5000}>
                                 <img
                                     className="d-block w-100"
-                                    src={news.image || 'https://via.placeholder.com/1200x400?text=Saepe+Event'}
+                                    src={news.image || 'https://placehold.co/1200x400?text=Event'}
                                     alt={news.title}
                                     style={{ height: '400px', objectFit: 'cover' }}
                                 />
@@ -95,21 +89,21 @@ const Home = () => {
 
             {/* Сітка новин */}
             <section>
-                <h2 className="mb-4">Останні новини</h2>
+                <h2 className="mb-4" style={{ color: '#4B5320' }}>Останні новини</h2>
                 {regularNews.length === 0 && !error ? (
                     <p className="text-muted">Новини відсутні.</p>
                 ) : (
                     <Row xs={1} md={2} lg={3} className="g-4">
                         {regularNews.map((news) => (
-                            <Col key={news.id}>
-                                <Card className="h-100 shadow-sm">
+                            <Col key={news._id}>
+                                <Card className="h-100 shadow-sm military-card-border">
                                     <Card.Img
                                         variant="top"
-                                        src={news.image || 'https://via.placeholder.com/400x200?text=Новина'}
+                                        src={news.image || 'https://placehold.co/400x200?text=News'}
                                         style={{ height: '200px', objectFit: 'cover' }}
                                     />
                                     <Card.Body className="d-flex flex-column">
-                                        <Card.Title>{news.title}</Card.Title>
+                                        <Card.Title style={{ color: '#4B5320', fontWeight: 'bold' }}>{news.title}</Card.Title>
                                         <Card.Text className="text-muted small">
                                             {new Date(news.date || Date.now()).toLocaleDateString('uk-UA')}
                                         </Card.Text>
@@ -119,6 +113,7 @@ const Home = () => {
                                         <Button
                                             variant="outline-primary"
                                             className="mt-auto"
+                                            style={{ borderColor: '#4B5320', color: '#4B5320' }}
                                             onClick={() => handleShowDetails(news)}
                                         >
                                             Детальніше
@@ -133,7 +128,7 @@ const Home = () => {
 
             {/* Модальне вікно деталей */}
             <Modal show={showModal} onHide={handleClose} size="lg" centered>
-                <Modal.Header closeButton>
+                <Modal.Header closeButton className="military-card-header text-white" style={{ backgroundColor: '#4B5320' }}>
                     <Modal.Title>{selectedEvent?.title}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
@@ -146,7 +141,7 @@ const Home = () => {
                         />
                     )}
                     <p className="text-muted mb-2">
-                        <strong>Дата:</strong> {new Date(selectedEvent?.date || Date.now()).toLocaleString('uk-UA', { dateStyle: 'long', timeStyle: 'short' })}
+                        <strong>Дата проведення:</strong> {new Date(selectedEvent?.date || Date.now()).toLocaleString('uk-UA', { dateStyle: 'long', timeStyle: 'short' })}
                     </p>
                     <div className="mt-3">
                         {selectedEvent?.description}
